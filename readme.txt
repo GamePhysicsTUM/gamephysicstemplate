@@ -2,6 +2,7 @@
 --- Visual Studio 2013/15/17 Template Project for C++/DirectX11 Application ---
 --- Marc Treib, Florian Ferstl, Sept 2013 -------------------------------------
 --- Updated: Florian Ferstl, Sept 2014 ----------------------------------------
+--- Updated: Mina Saad Aziz, May 2016 -----------------------------------------
 --- Updated: Mengyu Chu, Nov 2017    ------------------------------------------
 -------------------------------------------------------------------------------
 
