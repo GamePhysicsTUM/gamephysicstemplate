@@ -646,8 +646,8 @@ matrix4x4<Scalar>::initRotationX(Scalar rot)
 
 	this->initId();
 	value[1][1] = (Scalar)  cos(drot);
-	value[2][1] = (Scalar)  sin(drot);
-	value[1][2] = (Scalar)(-sin(drot));
+	value[1][2] = (Scalar)  sin(drot);
+	value[2][1] = (Scalar)(-sin(drot));
 	value[2][2] = (Scalar)  cos(drot);
 }
 template<class Scalar>
@@ -659,8 +659,8 @@ matrix4x4<Scalar>::initRotationY(Scalar rot)
 
 	this->initId();
 	value[0][0] = (Scalar)  cos(drot);
-	value[2][0] = (Scalar)(-sin(drot));
-	value[0][2] = (Scalar)  sin(drot);
+	value[0][2] = (Scalar)(-sin(drot));
+	value[2][0] = (Scalar)  sin(drot);
 	value[2][2] = (Scalar)  cos(drot);
 }
 template<class Scalar>
@@ -672,8 +672,8 @@ matrix4x4<Scalar>::initRotationZ(Scalar rot)
 
 	this->initId();
 	value[0][0] = (Scalar)  cos(drot);
-	value[1][0] = (Scalar)  sin(drot);
-	value[0][1] = (Scalar)(-sin(drot));
+	value[0][1] = (Scalar)  sin(drot);
+	value[1][0] = (Scalar)(-sin(drot));
 	value[1][1] = (Scalar)  cos(drot);
 }
 template<class Scalar>
