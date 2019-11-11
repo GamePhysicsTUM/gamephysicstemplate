@@ -36,7 +36,17 @@ public:
 	Vec3 getPositionOfMassPoint(int index);
 	Vec3 getVelocityOfMassPoint(int index);
 	void applyExternalForce(Vec3 force);
-	
+
+	void simulateEulerStep(int steps, int spring, float time);
+
+	void simulateMidpointStep(int steps, int spring, float time);
+
+	void simulateLeapfrogStep(int steps, int spring, float time);
+
+	void resetPositions();
+	void drawLine(int point1, int point2);
+	void clamp(int point, float min, float max);
+
 	// Do Not Change
 	void setIntegrator(int integrator) {
 		m_iIntegrator = integrator;
@@ -48,6 +58,22 @@ private:
 	float m_fStiffness;
 	float m_fDamping;
 	int m_iIntegrator;
+	struct Masspoint {
+		Vec3 position;
+		Vec3 velocity;
+		bool isFixed;
+	};
+	Masspoint masspoints[30];
+	int masspointsCounter;
+	struct Spring {
+		int first;
+		int second;
+		float initL;
+	};
+	Spring springs[53];
+	int springsCounter;
+	Vec3 gravity;
+	int oldIntegrator;
 
 	// UI Attributes
 	Vec3 m_externalForce;
