@@ -74,6 +74,7 @@ private:
 	int springsCounter;
 	Vec3 gravity;
 	int oldIntegrator;
+	std::mt19937 eng;
 
 	// UI Attributes
 	Vec3 m_externalForce;

@@ -258,7 +258,7 @@ void MassSpringSystemSimulator::clamp(int point, float min, float max) {
 	//clamp X axis
 	if (masspoints[point].position.x < min) {
 		masspoints[point].position.x = min;
-		if (collision > 0) {
+		if (collision == 0) {
 			masspoints[point].velocity *= -1;
 		}
 		collision++;
@@ -267,7 +267,7 @@ void MassSpringSystemSimulator::clamp(int point, float min, float max) {
 		if (
 			masspoints[point].position.x > max) {
 			masspoints[point].position.x = max;
-			if (collision > 0) {
+			if (collision == 0) {
 				masspoints[point].velocity *= -1;
 			}
 			collision++;
@@ -277,7 +277,7 @@ void MassSpringSystemSimulator::clamp(int point, float min, float max) {
 	if (
 		masspoints[point].position.z < min) {
 		masspoints[point].position.z = min;
-		if (collision > 0) {
+		if (collision == 0) {
 			masspoints[point].velocity *= -1;
 		}
 		collision++;
@@ -286,15 +286,19 @@ void MassSpringSystemSimulator::clamp(int point, float min, float max) {
 		if (
 			masspoints[point].position.z > max) {
 			masspoints[point].position.z = max;
-			if (collision > 0) {
+			if (collision == 0 ) {
 				masspoints[point].velocity *= -1;
 			}
 			collision++;
 		}
 	}
 
-	if (collision >= 3) {
-		masspoints[point].position = Vec3(0,0,0);
+	if (collision == 3) {
+		std::uniform_real_distribution<float> randPos(-0.5f, 0.5f);
+		std::uniform_real_distribution<float> randVel(-50, 50);
+
+		masspoints[point].position = Vec3(randPos(eng), randPos(eng), randPos(eng));
+		masspoints[point].velocity = Vec3(randVel(eng), randVel(eng), randVel(eng));
 	}
 	
 }
