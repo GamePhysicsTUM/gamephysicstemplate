@@ -1,1 +1,6 @@
 /.vs/
+Win32/*
+Simulations/Win32/*
+Simulations/util/*
+*.user
+SimulationsRunner/
