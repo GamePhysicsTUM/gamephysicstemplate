@@ -395,58 +395,28 @@ void MassSpringSystemSimulator::simulateLeapfrogStep(int steps, int spring, floa
 
 	for (int i = 0; i < steps; i++) {
 		diff = masspoints[springs[spring].first].position - masspoints[springs[spring].second].position;
-		springForce = (m_fStiffness * (-sqrtf(dot(diff, diff)) + springs[spring].initL) / sqrtf(dot(diff, diff))) * diff;
-		damping = m_fDamping * masspoints[springs[spring].first].velocity;
-		forces = springForce + m_externalForce - damping;
-		acceleration = (forces / m_fMass) + (gravity);
-		masspoints[springs[spring].first].velocity += time * 0.5f * acceleration;
-		masspoints[springs[spring].first].position += time * masspoints[springs[spring].first].velocity;
+		if (diff.x != 0 || diff.y != 0 || diff.z != 0) {
+			springForce = (m_fStiffness * (-sqrtf(dot(diff, diff)) + springs[spring].initL) / sqrtf(dot(diff, diff))) * diff;
+			damping = m_fDamping * masspoints[springs[spring].first].velocity;
+			forces = springForce + m_externalForce - damping;
+			acceleration = (forces / m_fMass) + (gravity);
+			masspoints[springs[spring].first].velocity += time * 0.5f * acceleration;
+			masspoints[springs[spring].first].position += time * masspoints[springs[spring].first].velocity;
 
-		springForce = (m_fStiffness * (-sqrtf(dot(diff, diff)) + springs[spring].initL) / sqrtf(dot(diff, diff))) * (-diff);
-		damping = m_fDamping * masspoints[springs[spring].second].velocity;
-		forces = springForce + m_externalForce - damping;
-		acceleration = (forces / m_fMass) + (gravity);
-		masspoints[springs[spring].second].velocity += time * 0.5f * acceleration;
-		masspoints[springs[spring].second].position += time * masspoints[springs[spring].second].velocity;
-		if (m_iTestCase == 3) {
-			clamp(springs[spring].first, -0.5f, 0.5f);
-			clamp(springs[spring].second, -0.5f, 0.5f);
+			springForce = (m_fStiffness * (-sqrtf(dot(diff, diff)) + springs[spring].initL) / sqrtf(dot(diff, diff))) * (-diff);
+			damping = m_fDamping * masspoints[springs[spring].second].velocity;
+			forces = springForce + m_externalForce - damping;
+			acceleration = (forces / m_fMass) + (gravity);
+			masspoints[springs[spring].second].velocity += time * 0.5f * acceleration;
+			masspoints[springs[spring].second].position += time * masspoints[springs[spring].second].velocity;
+			if (m_iTestCase == 3) {
+				clamp(springs[spring].first, -0.5f, 0.5f);
+				clamp(springs[spring].second, -0.5f, 0.5f);
+			}
 		}
 	}
 
 }
-/*
-void MassSpringSystemSimulator::simulateLeapfrogStep(int steps, int spring, float time) {
-	Vec3 diff;
-	Vec3 springForce;
-	Vec3 damping;
-	Vec3 forces;
-	Vec3 acceleration;
-
-
-	for (int i = 0; i < steps; i++) {
-		diff = masspoints[springs[spring].first].position - masspoints[springs[spring].second].position;
-		if (diff.x != 0 || diff.y != 0 || diff.z != 0) {
-			if (fmod(time, 0.002f) != 0) {
-				springForce = (m_fStiffness * (-sqrtf(dot(diff, diff)) + springs[spring].initL) / sqrtf(dot(diff, diff))) * diff;
-				damping = m_fDamping * masspoints[springs[spring].first].velocity;
-				forces = springForce + m_externalForce - damping;
-				acceleration = (forces / m_fMass) + (gravity);
-				masspoints[springs[spring].first].velocity += time * 2 * acceleration;
-
-				springForce = (m_fStiffness * (-sqrtf(dot(diff, diff)) + springs[spring].initL) / sqrtf(dot(diff, diff))) * (- diff);
-				damping = m_fDamping * masspoints[springs[spring].second].velocity;
-				forces = springForce + m_externalForce - damping;
-				acceleration = (forces / m_fMass) + (gravity);
-				masspoints[springs[spring].second].velocity += time * 2 * acceleration;
-			}
-			else {
-				masspoints[springs[spring].first].position += time * masspoints[springs[spring].first].velocity;
-				masspoints[springs[spring].second].position += time * masspoints[springs[spring].second].velocity;
-			}
-		}
-	}
-}*/
 
 void MassSpringSystemSimulator::externalForcesCalculations(float timeElapsed)
 {
