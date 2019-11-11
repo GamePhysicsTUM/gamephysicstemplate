@@ -241,42 +241,60 @@ void MassSpringSystemSimulator::notifyCaseChanged(int testCase)
 }
 
 void MassSpringSystemSimulator::clamp(int point, float min, float max) {
+	int collision = 0;
 	//clam Y axis
 	if (masspoints[point].position.y < min) {
+		collision++;
 		masspoints[point].position.y = min;
 		masspoints[point].velocity *= -1;
 	}
 	else {
 		if (masspoints[point].position.y > max) {
+			collision++;
 			masspoints[point].position.y = max;
 			masspoints[point].velocity *= -1;
 		}
 	}
 	//clamp X axis
-	if (
-		masspoints[point].position.x < min) {
+	if (masspoints[point].position.x < min) {
 		masspoints[point].position.x = min;
-		masspoints[point].velocity *= -1;
+		if (collision > 0) {
+			masspoints[point].velocity *= -1;
+		}
+		collision++;
 	}
 	else {
 		if (
 			masspoints[point].position.x > max) {
 			masspoints[point].position.x = max;
-			masspoints[point].velocity *= -1;
+			if (collision > 0) {
+				masspoints[point].velocity *= -1;
+			}
+			collision++;
 		}
 	}
 	//clamp Z axis
 	if (
 		masspoints[point].position.z < min) {
 		masspoints[point].position.z = min;
-		masspoints[point].velocity *= -1;
+		if (collision > 0) {
+			masspoints[point].velocity *= -1;
+		}
+		collision++;
 	}
 	else {
 		if (
 			masspoints[point].position.z > max) {
 			masspoints[point].position.z = max;
-			masspoints[point].velocity *= -1;
+			if (collision > 0) {
+				masspoints[point].velocity *= -1;
+			}
+			collision++;
 		}
+	}
+
+	if (collision >= 3) {
+		masspoints[point].position = Vec3(0,0,0);
 	}
 	
 }
@@ -308,7 +326,7 @@ void MassSpringSystemSimulator::simulateEulerStep(int steps, int spring, float t
 			forces = -springForce + m_externalForce - damping;
 			acceleration = (forces / m_fMass) + gravity;
 			masspoints[springs[spring].second].velocity += time * acceleration;
-
+			
 			if (m_iTestCase == 3) {
 				clamp(springs[spring].first, -0.5f, 0.5f);
 				clamp(springs[spring].second, -0.5f, 0.5f);
