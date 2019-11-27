@@ -224,8 +224,9 @@
     </FxCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="RigidBodySystemSimulator.cpp" />
+    <ClCompile Include="main.cpp" />
     <ClCompile Include="RigidBodySystem.cpp" />
+    <ClCompile Include="RigidBodySystemSimulator.cpp" />
     <ClCompile Include="TemplateSimulator.cpp" />
     <ClCompile Include="util\FFmpeg.cpp" />
     <ClCompile Include="util\util.cpp" />
