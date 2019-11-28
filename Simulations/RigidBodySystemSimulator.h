@@ -3,7 +3,7 @@
 #include "Simulator.h"
 //add your header for your rigid body system, for e.g.,
 #include "RigidBodySystem.h" 
-
+#include "collisionDetect.h"
 #define TESTCASEUSEDTORUNTEST 2
 
 class RigidBodySystemSimulator:public Simulator{
@@ -34,14 +34,16 @@ public:
 
 	void IntegrateRigidBody(int i, float step);
 
+	void handleCollision(int objA, int objB);
 private:
 	// Attributes
 	// add your RigidBodySystem data members, for e.g.,
 	// RigidBodySystem * m_pRigidBodySystem; 
-	RigidBodySystem m_pRigidBodySystem[2];
+	RigidBodySystem m_pRigidBodySystem[4];
 	Vec3 m_externalForce;
 	Vec3 torque;
 	int count;
+	CollisionInfo collInfo;
 
 	// UI Attributes
 	Point2D m_mouse;

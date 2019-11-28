@@ -1,10 +1,28 @@
 #include "RigidBodySystemSimulator.h"
 
+
+
 RigidBodySystemSimulator::RigidBodySystemSimulator()
 {
 	m_externalForce = Vec3(0, 0, 0);
 	torque = Vec3(0, 0, 0);
 	count = 0;
+
+	//Demo 1
+	addRigidBody(Vec3(0, 0, 0), Vec3(1, 0.6f, 0.5f), 200);
+	setOrientationOf(0, Quat(0, 0, sqrt(2) / 2, sqrt(2) / 2));
+	applyForceOnBody(0, Vec3(0.3f, 0.5f, 0.25f), Vec3(1, 1, 0));
+
+
+	//Demo 2
+	addRigidBody(Vec3(-0.2f, -0.1f, 0.1f), Vec3(0.2, 0.6f, 0.5f), 2);
+
+	//Demo3
+	addRigidBody(Vec3(-0.2f, 0.1f, 0), Vec3(0.1f, 0.2f, 0.1f), 2);
+	setVelocityOf(2, Vec3(0.1f, 0, 0));
+	addRigidBody(Vec3(0.3f, 0, 0), Vec3(0.1f, 0.2f, 0.1f), 2);
+	setOrientationOf(3, Quat(0, sin((M_PI * 45) / (180 * 2)), 0, cos((M_PI * 45) / (180 * 2))) * Quat(0, 0, sin((M_PI * 45) / (180 * 2)), cos((M_PI * 45) / (180 * 2))));
+	setVelocityOf(3, Vec3(-0.2f, 0, 0));
 }
 
 const char * RigidBodySystemSimulator::getTestCasesStr()
@@ -28,19 +46,22 @@ void RigidBodySystemSimulator::reset()
 void RigidBodySystemSimulator::drawFrame(ID3D11DeviceContext * pd3dImmediateContext)
 {
 	Mat4 objToWorld;
+	Mat4 objToWorld1;
+
 	switch (m_iTestCase)
 	{
 	case 0:
-		DUC->drawRigidBody(
-			Mat4(m_pRigidBodySystem[0].size.x, 0, 0, 0,
-				0, m_pRigidBodySystem[0].size.y, 0, 0,
-				0, 0, m_pRigidBodySystem[0].size.z, 0,
-				0, 0, 0, 1) *
+		objToWorld = Mat4(m_pRigidBodySystem[0].size.x, 0, 0, 0,
+			0, m_pRigidBodySystem[0].size.y, 0, 0,
+			0, 0, m_pRigidBodySystem[0].size.z, 0,
+			0, 0, 0, 1) *
 			m_pRigidBodySystem[0].orientation.getRotMat() *
 			Mat4(1, 0, 0, 0,
 				0, 1, 0, 0,
 				0, 0, 1, 0,
-				m_pRigidBodySystem[0].comPosition.x, m_pRigidBodySystem[0].comPosition.y, m_pRigidBodySystem[0].comPosition.z, 1));
+				m_pRigidBodySystem[0].comPosition.x, m_pRigidBodySystem[0].comPosition.y, m_pRigidBodySystem[0].comPosition.z, 1);
+
+		DUC->drawRigidBody(objToWorld);
 		break;
 	case 1:
 		objToWorld = Mat4(m_pRigidBodySystem[1].size.x, 0, 0, 0,
@@ -52,10 +73,35 @@ void RigidBodySystemSimulator::drawFrame(ID3D11DeviceContext * pd3dImmediateCont
 				0, 1, 0, 0,
 				0, 0, 1, 0,
 				m_pRigidBodySystem[1].comPosition.x, m_pRigidBodySystem[1].comPosition.y, m_pRigidBodySystem[1].comPosition.z, 1);
+
 		DUC->drawRigidBody(objToWorld);
-		DUC->drawSphere(Vec3(0, 0, 0), Vec3(0.01f, 0.01f, 0.01f));
 		break;
 	case 2:
+		objToWorld = Mat4(m_pRigidBodySystem[2].size.x, 0, 0, 0,
+			0, m_pRigidBodySystem[2].size.y, 0, 0,
+			0, 0, m_pRigidBodySystem[2].size.z, 0,
+			0, 0, 0, 1) *
+			m_pRigidBodySystem[2].orientation.getRotMat() *
+			Mat4(1, 0, 0, 0,
+				0, 1, 0, 0,
+				0, 0, 1, 0,
+				m_pRigidBodySystem[2].comPosition.x, m_pRigidBodySystem[2].comPosition.y, m_pRigidBodySystem[2].comPosition.z, 1);
+
+		DUC->drawRigidBody(objToWorld);
+
+		objToWorld1 = Mat4(m_pRigidBodySystem[3].size.x, 0, 0, 0,
+			0, m_pRigidBodySystem[3].size.y, 0, 0,
+			0, 0, m_pRigidBodySystem[3].size.z, 0,
+			0, 0, 0, 1) *
+			m_pRigidBodySystem[3].orientation.getRotMat() *
+			Mat4(1, 0, 0, 0,
+				0, 1, 0, 0,
+				0, 0, 1, 0,
+				m_pRigidBodySystem[3].comPosition.x, m_pRigidBodySystem[3].comPosition.y, m_pRigidBodySystem[3].comPosition.z, 1);
+
+		DUC->drawRigidBody(objToWorld1);
+
+		collInfo = checkCollisionSAT(objToWorld, objToWorld1);
 		break;
 	case 3:
 		break;
@@ -72,16 +118,13 @@ void RigidBodySystemSimulator::notifyCaseChanged(int testCase)
 	switch (m_iTestCase)
 	{
 	case 0:
-		addRigidBody(Vec3(0, 0, 0), Vec3(1, 0.6f, 0.5f), 2);
-		setOrientationOf(0, Quat(0, 0, sqrt(2) / 2, sqrt(2) / 2));
-		applyForceOnBody(0, Vec3(0.3f, 0.5f, 0.25f), Vec3(1, 1, 0));
 		IntegrateRigidBody(0, 2);
 		break;
 	case 1:
-		addRigidBody(Vec3(-0.2f, -0.1f, 0.1f), Vec3(0.2, 0.6f, 0.5f), 2);
 
 		break;
 	case 2:
+
 		break;
 	case 3:
 		break;
@@ -90,39 +133,41 @@ void RigidBodySystemSimulator::notifyCaseChanged(int testCase)
 	}
 }
 
-void RigidBodySystemSimulator::externalForcesCalculations(float timeElapsed)
-{
-	if (m_iTestCase == 1) {
-		Point2D mouseDiff;
-		mouseDiff.x = m_trackmouse.x - m_oldtrackmouse.x;
-		mouseDiff.y = m_trackmouse.y - m_oldtrackmouse.y;
-
-		Vec3 contact =  - Vec3(m_oldtrackmouse.x, m_oldtrackmouse.y, 0);
-
-		if (mouseDiff.x != 0 || mouseDiff.y != 0)
-		{
-			Mat4 worldViewInv = Mat4(DUC->g_camera.GetWorldMatrix() * DUC->g_camera.GetViewMatrix());
-			worldViewInv = worldViewInv.inverse();
-			Vec3 inputView = Vec3((float)mouseDiff.x, (float)-mouseDiff.y, 0);
-			Vec3 inputWorld = worldViewInv.transformVectorNormal(inputView);
-
-			contact = worldViewInv.transformVectorNormal(contact);
-
-			// find a proper scale!
-			float inputScale = 0.001f;
-			contact = contact * inputScale;
-			inputWorld = inputWorld * inputScale;
-			m_externalForce += inputWorld;
-			torque += cross(inputWorld, contact);
-		}
-	}
-}
 
 void RigidBodySystemSimulator::simulateTimestep(float timeStep)
 {
-
-	if (m_iTestCase == 1) {
+	switch (m_iTestCase) {
+	case 1:
 		IntegrateRigidBody(1, timeStep);
+		break;
+	case 2:
+		IntegrateRigidBody(2, timeStep);
+		IntegrateRigidBody(3, timeStep);
+		if (collInfo.isValid) {
+			handleCollision(2, 3);
+		}
+		break;
+	case 3:
+		break;
+	default:
+		break;
+	}
+}
+
+void RigidBodySystemSimulator::handleCollision(int objA, int objB) {
+	Vec3 posA = m_pRigidBodySystem[objA].worldToObj(collInfo.collisionPointWorld);
+	Vec3 velA = m_pRigidBodySystem[objA].comVelocity + cross(m_pRigidBodySystem[objA].angularVelocity, posA);
+	Vec3 posB = m_pRigidBodySystem[objB].worldToObj(collInfo.collisionPointWorld);
+	Vec3 velB = m_pRigidBodySystem[objB].comVelocity + cross(m_pRigidBodySystem[objB].angularVelocity, posB);
+	Vec3 velRel = velA - velB;
+	float normalVel = dot(collInfo.normalWorld, velRel);
+	float c = 0.5f;
+	if (normalVel < 0) {
+		float impulse = dot((-(1 + c) * velRel), collInfo.normalWorld) / ((1 / m_pRigidBodySystem[objA].mass) + (1 / m_pRigidBodySystem[objB].mass) + dot(((cross(m_pRigidBodySystem[objA].intertiaTensorInverse * cross(posA, collInfo.normalWorld), posA)) + (cross(m_pRigidBodySystem[objB].intertiaTensorInverse * cross(posB, collInfo.normalWorld), posB))), collInfo.normalWorld));
+		m_pRigidBodySystem[objA].comVelocity += impulse * collInfo.normalWorld / m_pRigidBodySystem[objA].mass;
+		m_pRigidBodySystem[objB].comVelocity -= impulse * collInfo.normalWorld / m_pRigidBodySystem[objB].mass;
+		m_pRigidBodySystem[objA].angularMomentum += (cross(posA, impulse * collInfo.normalWorld));
+		m_pRigidBodySystem[objB].angularMomentum -= (cross(posB, impulse * collInfo.normalWorld));
 	}
 }
 
@@ -163,12 +208,7 @@ Vec3 RigidBodySystemSimulator::getAngularVelocityOfRigidBody(int i)
 void RigidBodySystemSimulator::applyForceOnBody(int i, Vec3 loc, Vec3 force)
 {
 	m_externalForce = force;
-	Vec3 objloc = (m_pRigidBodySystem[i].orientation.getRotMat() *
-		Mat4(1, 0, 0, 0,
-			0, 1, 0, 0,
-			0, 0, 1, 0,
-			m_pRigidBodySystem[i].comPosition.x, m_pRigidBodySystem[i].comPosition.y, m_pRigidBodySystem[i].comPosition.z, 1)).inverse().transformVector(loc);
-	torque = cross(objloc, force);
+	torque = cross(m_pRigidBodySystem[i].worldToObj(loc), force);
 
 }
 
@@ -208,18 +248,37 @@ void RigidBodySystemSimulator::IntegrateRigidBody(int i, float step)
 	torque = Vec3(0, 0, 0);
 	Vec3 pointVelocity = m_pRigidBodySystem[i].comVelocity + cross(m_pRigidBodySystem[i].angularVelocity, Vec3(-0.3f, -0.5f, -0.25f));
 
-	
+
 	if (m_iTestCase == 0) {
 		cout << "Angular Velocity after one Euler step: " << m_pRigidBodySystem[i].angularVelocity << "\n";
 		cout << "Linear Velocity at point (-0.3, -0.5, -0.25) after one Euler step: " << pointVelocity << "\n";
 	}
-	/*
-	else {
-		if (m_iTestCase == 1) {
-			cout << "Position of rigid body after one Euler step: " << m_pRigidBodySystem[i].comPosition << "\n";
-			cout << "Linear velocity of rigid body after one Euler step: " << m_pRigidBodySystem[i].comVelocity << "\n";
+}
 
+void RigidBodySystemSimulator::externalForcesCalculations(float timeElapsed)
+{
+	if (m_iTestCase == 1) {
+		Point2D mouseDiff;
+		mouseDiff.x = m_trackmouse.x - m_oldtrackmouse.x;
+		mouseDiff.y = m_trackmouse.y - m_oldtrackmouse.y;
+
+		Vec3 contact = -Vec3(m_oldtrackmouse.x, m_oldtrackmouse.y, 0);
+
+		if (mouseDiff.x != 0 || mouseDiff.y != 0)
+		{
+			Mat4 worldViewInv = Mat4(DUC->g_camera.GetWorldMatrix() * DUC->g_camera.GetViewMatrix());
+			worldViewInv = worldViewInv.inverse();
+			Vec3 inputView = Vec3((float)mouseDiff.x, (float)-mouseDiff.y, 0);
+			Vec3 inputWorld = worldViewInv.transformVectorNormal(inputView);
+
+			contact = worldViewInv.transformVectorNormal(contact);
+
+			// find a proper scale!
+			float inputScale = 0.001f;
+			contact = contact * inputScale;
+			inputWorld = inputWorld * inputScale;
+			m_externalForce += inputWorld;
+			torque += cross(inputWorld, contact);
 		}
-	}*/
-
+	}
 }

@@ -32,4 +32,11 @@ void RigidBodySystem::precalculateIntertiaInverse()
 		0,0,0,1);
 }
 
+Vec3 RigidBodySystem::worldToObj(Vec3 position) {
+	return (orientation.getRotMat() *
+		Mat4(1, 0, 0, 0,
+			0, 1, 0, 0,
+			0, 0, 1, 0,
+			comPosition.x, comPosition.y, comPosition.z, 1)).inverse().transformVector(position);
+}
 

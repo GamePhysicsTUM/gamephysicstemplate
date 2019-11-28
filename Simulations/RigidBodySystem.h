@@ -19,6 +19,7 @@ public:
 	Vec3 size;
 
 	void precalculateIntertiaInverse();
+	Vec3 worldToObj(Vec3 position);
 private:
 
 };
