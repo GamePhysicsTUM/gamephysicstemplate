@@ -208,7 +208,7 @@ Vec3 RigidBodySystemSimulator::getAngularVelocityOfRigidBody(int i)
 void RigidBodySystemSimulator::applyForceOnBody(int i, Vec3 loc, Vec3 force)
 {
 	m_externalForce = force;
-	torque = cross(m_pRigidBodySystem[i].worldToObj(loc), force);
+	torque = cross(loc, force);
 
 }
 
