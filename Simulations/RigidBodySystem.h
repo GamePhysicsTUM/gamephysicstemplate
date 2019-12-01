@@ -17,9 +17,14 @@ public:
 	Vec3 angularVelocity;
 	Quat orientation;
 	Vec3 size;
-
+	Mat4 objToWorldMat;
+	Vec3 forces;
+	Vec3 torque;
+	//functions
 	void precalculateIntertiaInverse();
 	Vec3 worldToObj(Vec3 position);
+	Mat4 calculateObjToWorldMatrix();
+	bool containsPoint(Vec3 position);
 private:
 
 };

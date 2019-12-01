@@ -6,6 +6,11 @@
 #include "collisionDetect.h"
 #define TESTCASEUSEDTORUNTEST 2
 
+#define RED 0
+#define YELLOW 1
+#define GREEN 2
+#define WHITE 3
+
 class RigidBodySystemSimulator:public Simulator{
 public:
 	// Construtors
@@ -35,15 +40,23 @@ public:
 	void IntegrateRigidBody(int i, float step);
 
 	void handleCollision(int objA, int objB);
+	void handleWallCollision(int objA, int objB);
+
+	void resetPositions();
 private:
 	// Attributes
 	// add your RigidBodySystem data members, for e.g.,
 	// RigidBodySystem * m_pRigidBodySystem; 
-	RigidBodySystem m_pRigidBodySystem[4];
+	RigidBodySystem m_pRigidBodySystem[14];
 	Vec3 m_externalForce;
-	Vec3 torque;
 	int count;
+	int objectColor;
 	CollisionInfo collInfo;
+	float damping;
+	int iterator1;
+	int iterator2;
+	bool checkWalls;
+
 
 	// UI Attributes
 	Point2D m_mouse;

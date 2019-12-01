@@ -1,28 +1,52 @@
 #include "RigidBodySystemSimulator.h"
 
-
-
 RigidBodySystemSimulator::RigidBodySystemSimulator()
 {
 	m_externalForce = Vec3(0, 0, 0);
-	torque = Vec3(0, 0, 0);
 	count = 0;
+	damping = 0;
+	iterator1 = 4;
+	iterator2 = 5;
+	checkWalls = false;
 
 	//Demo 1
-	addRigidBody(Vec3(0, 0, 0), Vec3(1, 0.6f, 0.5f), 200);
+	addRigidBody(Vec3(0, 0, 0), Vec3(1, 0.6f, 0.5f), 2);
 	setOrientationOf(0, Quat(0, 0, sqrt(2) / 2, sqrt(2) / 2));
 	applyForceOnBody(0, Vec3(0.3f, 0.5f, 0.25f), Vec3(1, 1, 0));
 
-
 	//Demo 2
 	addRigidBody(Vec3(-0.2f, -0.1f, 0.1f), Vec3(0.2, 0.6f, 0.5f), 2);
+	applyForceOnBody(1, Vec3(-0.1f, -0.4f, 0.35f), Vec3(1, 1, 0));
 
 	//Demo3
-	addRigidBody(Vec3(-0.2f, 0.1f, 0), Vec3(0.1f, 0.2f, 0.1f), 2);
-	setVelocityOf(2, Vec3(0.1f, 0, 0));
-	addRigidBody(Vec3(0.3f, 0, 0), Vec3(0.1f, 0.2f, 0.1f), 2);
-	setOrientationOf(3, Quat(0, sin((M_PI * 45) / (180 * 2)), 0, cos((M_PI * 45) / (180 * 2))) * Quat(0, 0, sin((M_PI * 45) / (180 * 2)), cos((M_PI * 45) / (180 * 2))));
-	setVelocityOf(3, Vec3(-0.2f, 0, 0));
+	addRigidBody(Vec3(0.2f, 0.3f, 0), Vec3(0.1f, 0.1f, 0.1f), 4);
+	setOrientationOf(2, Quat(0, sin(M_PI / 8), 0, cos(M_PI / 8)) * Quat(0, 0, sin(M_PI / 8), cos(M_PI / 8)));
+	setVelocityOf(2, Vec3(-0.1f, -0.1f, 0));
+
+	addRigidBody(Vec3(0.15f, 0.05f, 0), Vec3(0.2f, 0.2f, 0.1f), 8);
+
+	//Demo4
+	addRigidBody(Vec3(-0.25f, -0.4f, 0), Vec3(0.1f, 0.1f, 0.1f), 1);
+	addRigidBody(Vec3(0.25f, -0.4f, 0), Vec3(0.1f, 0.1f, 0.1f), 1);
+
+	addRigidBody(Vec3(0.1f, -0.2f, 0), Vec3(0.1f, 0.1f, 0.1f), 1);
+	addRigidBody(Vec3(-0.15f, -0.2f, 0), Vec3(0.1f, 0.1f, 0.1f), 1);
+
+	//Floor and walls
+	addRigidBody(Vec3(0, -0.55f, 0), Vec3(1, 0.025f, 1), 1000000);
+	m_pRigidBodySystem[8].calculateObjToWorldMatrix();
+	addRigidBody(Vec3(0, 0.51f, 0), Vec3(1, 0.025f, 1), 1000000);
+	m_pRigidBodySystem[9].calculateObjToWorldMatrix();
+
+	addRigidBody(Vec3(-0.51f, 0, 0), Vec3(0.025f, 1, 1), 1000000);
+	m_pRigidBodySystem[10].calculateObjToWorldMatrix();
+	addRigidBody(Vec3(0.51f, 0, 0), Vec3(0.025f, 1, 1), 1000000);
+	m_pRigidBodySystem[11].calculateObjToWorldMatrix();
+
+	addRigidBody(Vec3(0, 0, -0.51f), Vec3(1, 1, 0.025f), 1000000);
+	m_pRigidBodySystem[12].calculateObjToWorldMatrix();
+	addRigidBody(Vec3(0, 0, 0.51f), Vec3(1, 1, 0.025f), 1000000);
+	m_pRigidBodySystem[13].calculateObjToWorldMatrix();
 }
 
 const char * RigidBodySystemSimulator::getTestCasesStr()
@@ -33,7 +57,11 @@ const char * RigidBodySystemSimulator::getTestCasesStr()
 void RigidBodySystemSimulator::initUI(DrawingUtilitiesClass * DUC)
 {
 	this->DUC = DUC;
-
+	if (m_iTestCase == 3) {
+		TwType TW_TYPE_INTEGRATOR = TwDefineEnumFromString("Apply force on", "Red, Yellow, Green, White");
+		TwAddVarRW(DUC->g_pTweakBar, "Apply force on", TW_TYPE_INTEGRATOR, &objectColor, "");
+		objectColor = RED;
+	}
 }
 
 void RigidBodySystemSimulator::reset()
@@ -45,95 +73,75 @@ void RigidBodySystemSimulator::reset()
 
 void RigidBodySystemSimulator::drawFrame(ID3D11DeviceContext * pd3dImmediateContext)
 {
-	Mat4 objToWorld;
 	Mat4 objToWorld1;
 
 	switch (m_iTestCase)
 	{
 	case 0:
-		objToWorld = Mat4(m_pRigidBodySystem[0].size.x, 0, 0, 0,
-			0, m_pRigidBodySystem[0].size.y, 0, 0,
-			0, 0, m_pRigidBodySystem[0].size.z, 0,
-			0, 0, 0, 1) *
-			m_pRigidBodySystem[0].orientation.getRotMat() *
-			Mat4(1, 0, 0, 0,
-				0, 1, 0, 0,
-				0, 0, 1, 0,
-				m_pRigidBodySystem[0].comPosition.x, m_pRigidBodySystem[0].comPosition.y, m_pRigidBodySystem[0].comPosition.z, 1);
+		m_pRigidBodySystem[0].calculateObjToWorldMatrix();
 
-		DUC->drawRigidBody(objToWorld);
+		DUC->drawRigidBody(m_pRigidBodySystem[0].objToWorldMat);
 		break;
 	case 1:
-		objToWorld = Mat4(m_pRigidBodySystem[1].size.x, 0, 0, 0,
-			0, m_pRigidBodySystem[1].size.y, 0, 0,
-			0, 0, m_pRigidBodySystem[1].size.z, 0,
-			0, 0, 0, 1) *
-			m_pRigidBodySystem[1].orientation.getRotMat() *
-			Mat4(1, 0, 0, 0,
-				0, 1, 0, 0,
-				0, 0, 1, 0,
-				m_pRigidBodySystem[1].comPosition.x, m_pRigidBodySystem[1].comPosition.y, m_pRigidBodySystem[1].comPosition.z, 1);
+		m_pRigidBodySystem[1].calculateObjToWorldMatrix();
 
-		DUC->drawRigidBody(objToWorld);
+		DUC->drawRigidBody(m_pRigidBodySystem[1].objToWorldMat);
 		break;
 	case 2:
-		objToWorld = Mat4(m_pRigidBodySystem[2].size.x, 0, 0, 0,
-			0, m_pRigidBodySystem[2].size.y, 0, 0,
-			0, 0, m_pRigidBodySystem[2].size.z, 0,
-			0, 0, 0, 1) *
-			m_pRigidBodySystem[2].orientation.getRotMat() *
-			Mat4(1, 0, 0, 0,
-				0, 1, 0, 0,
-				0, 0, 1, 0,
-				m_pRigidBodySystem[2].comPosition.x, m_pRigidBodySystem[2].comPosition.y, m_pRigidBodySystem[2].comPosition.z, 1);
+		m_pRigidBodySystem[2].calculateObjToWorldMatrix();
 
-		DUC->drawRigidBody(objToWorld);
+		DUC->drawRigidBody(m_pRigidBodySystem[2].objToWorldMat);
 
-		objToWorld1 = Mat4(m_pRigidBodySystem[3].size.x, 0, 0, 0,
-			0, m_pRigidBodySystem[3].size.y, 0, 0,
-			0, 0, m_pRigidBodySystem[3].size.z, 0,
-			0, 0, 0, 1) *
-			m_pRigidBodySystem[3].orientation.getRotMat() *
-			Mat4(1, 0, 0, 0,
-				0, 1, 0, 0,
-				0, 0, 1, 0,
-				m_pRigidBodySystem[3].comPosition.x, m_pRigidBodySystem[3].comPosition.y, m_pRigidBodySystem[3].comPosition.z, 1);
+		m_pRigidBodySystem[3].calculateObjToWorldMatrix();
 
-		DUC->drawRigidBody(objToWorld1);
-
-		collInfo = checkCollisionSAT(objToWorld, objToWorld1);
+		DUC->drawRigidBody(m_pRigidBodySystem[3].objToWorldMat);
 		break;
 	case 3:
+		m_pRigidBodySystem[4].calculateObjToWorldMatrix();
+		DUC->setUpLighting(Vec3(1, 0, 0), Vec3(0, 0, 0), 1, Vec3(0, 0, 0));
+		DUC->drawRigidBody(m_pRigidBodySystem[4].objToWorldMat);
+
+		m_pRigidBodySystem[5].calculateObjToWorldMatrix();
+		DUC->setUpLighting(Vec3(1, 1, 0), Vec3(0, 0, 0), 1, Vec3(0, 0, 0));
+		DUC->drawRigidBody(m_pRigidBodySystem[5].objToWorldMat);
+
+		m_pRigidBodySystem[6].calculateObjToWorldMatrix();
+		DUC->setUpLighting(Vec3(0, 1, 0), Vec3(0, 0, 0), 1, Vec3(0, 0, 0));
+		DUC->drawRigidBody(m_pRigidBodySystem[6].objToWorldMat);
+
+		m_pRigidBodySystem[7].calculateObjToWorldMatrix();
+		DUC->setUpLighting(Vec3(1, 1, 1), Vec3(0, 0, 0), 1, Vec3(0, 0, 0));
+		DUC->drawRigidBody(m_pRigidBodySystem[7].objToWorldMat);
 		break;
 	default:
 		break;
 	}
-
-
 }
 
 void RigidBodySystemSimulator::notifyCaseChanged(int testCase)
 {
 	m_iTestCase = testCase;
+	resetPositions();
 	switch (m_iTestCase)
 	{
 	case 0:
 		IntegrateRigidBody(0, 2);
 		break;
 	case 1:
-
+		for (int i = 0; i < 100; i++) {
+			IntegrateRigidBody(1, 0.01f);
+		}
 		break;
 	case 2:
-
 		break;
 	case 3:
+		m_externalForce = Vec3(0, -100, 0);
+		damping = 8;
 		break;
 	default:
 		break;
 	}
 }
-
-
 void RigidBodySystemSimulator::simulateTimestep(float timeStep)
 {
 	switch (m_iTestCase) {
@@ -141,36 +149,41 @@ void RigidBodySystemSimulator::simulateTimestep(float timeStep)
 		IntegrateRigidBody(1, timeStep);
 		break;
 	case 2:
-		IntegrateRigidBody(2, timeStep);
-		IntegrateRigidBody(3, timeStep);
+		collInfo = checkCollisionSAT(m_pRigidBodySystem[2].objToWorldMat, m_pRigidBodySystem[3].objToWorldMat);
 		if (collInfo.isValid) {
 			handleCollision(2, 3);
 		}
+		IntegrateRigidBody(2, timeStep);
+		IntegrateRigidBody(3, timeStep);
 		break;
 	case 3:
+		for (int j = iterator1 + 1; j < 8; j++) {
+			collInfo = checkCollisionSAT(m_pRigidBodySystem[iterator1].objToWorldMat, m_pRigidBodySystem[j].objToWorldMat);
+			if (collInfo.isValid) {
+				handleCollision(iterator1, j);
+			}
+		}
+		for (int k = 8; k < 14; k++) {
+			collInfo = checkCollisionSAT(m_pRigidBodySystem[iterator1].objToWorldMat, m_pRigidBodySystem[k].objToWorldMat);
+
+			if (collInfo.isValid) {
+				handleWallCollision(iterator1, k);
+			}
+		}
+		IntegrateRigidBody(iterator1, timeStep);
+
+		if (iterator1 < 8) {
+			iterator1++;
+			break;
+		}
+		else {
+			iterator1 = 4;
+		}
 		break;
 	default:
 		break;
 	}
 }
-
-void RigidBodySystemSimulator::handleCollision(int objA, int objB) {
-	Vec3 posA = m_pRigidBodySystem[objA].worldToObj(collInfo.collisionPointWorld);
-	Vec3 velA = m_pRigidBodySystem[objA].comVelocity + cross(m_pRigidBodySystem[objA].angularVelocity, posA);
-	Vec3 posB = m_pRigidBodySystem[objB].worldToObj(collInfo.collisionPointWorld);
-	Vec3 velB = m_pRigidBodySystem[objB].comVelocity + cross(m_pRigidBodySystem[objB].angularVelocity, posB);
-	Vec3 velRel = velA - velB;
-	float normalVel = dot(collInfo.normalWorld, velRel);
-	float c = 0.5f;
-	if (normalVel < 0) {
-		float impulse = dot((-(1 + c) * velRel), collInfo.normalWorld) / ((1 / m_pRigidBodySystem[objA].mass) + (1 / m_pRigidBodySystem[objB].mass) + dot(((cross(m_pRigidBodySystem[objA].intertiaTensorInverse * cross(posA, collInfo.normalWorld), posA)) + (cross(m_pRigidBodySystem[objB].intertiaTensorInverse * cross(posB, collInfo.normalWorld), posB))), collInfo.normalWorld));
-		m_pRigidBodySystem[objA].comVelocity += impulse * collInfo.normalWorld / m_pRigidBodySystem[objA].mass;
-		m_pRigidBodySystem[objB].comVelocity -= impulse * collInfo.normalWorld / m_pRigidBodySystem[objB].mass;
-		m_pRigidBodySystem[objA].angularMomentum += (cross(posA, impulse * collInfo.normalWorld));
-		m_pRigidBodySystem[objB].angularMomentum -= (cross(posB, impulse * collInfo.normalWorld));
-	}
-}
-
 void RigidBodySystemSimulator::onClick(int x, int y)
 {
 	m_trackmouse.x = x;
@@ -207,9 +220,8 @@ Vec3 RigidBodySystemSimulator::getAngularVelocityOfRigidBody(int i)
 
 void RigidBodySystemSimulator::applyForceOnBody(int i, Vec3 loc, Vec3 force)
 {
-	m_externalForce = force;
-	torque = cross(m_pRigidBodySystem[i].worldToObj(loc), force);
-
+	m_pRigidBodySystem[i].forces += force;
+	m_pRigidBodySystem[i].torque += cross(loc, force);
 }
 
 void RigidBodySystemSimulator::addRigidBody(Vec3 position, Vec3 size, int mass)
@@ -231,38 +243,81 @@ void RigidBodySystemSimulator::setVelocityOf(int i, Vec3 velocity)
 void RigidBodySystemSimulator::IntegrateRigidBody(int i, float step)
 {
 	m_pRigidBodySystem[i].comPosition += step * m_pRigidBodySystem[i].comVelocity;
-	m_pRigidBodySystem[i].comVelocity += (step * m_externalForce / m_pRigidBodySystem[i].mass);
-	m_externalForce = Vec3(0, 0, 0);
-
+	m_pRigidBodySystem[i].comVelocity += (step * (((m_pRigidBodySystem[i].forces - (damping * m_pRigidBodySystem[i].comVelocity)) / m_pRigidBodySystem[i].mass) + m_externalForce));
+	
 	Quat temp = Quat(m_pRigidBodySystem[i].angularVelocity.x, m_pRigidBodySystem[i].angularVelocity.y, m_pRigidBodySystem[i].angularVelocity.z, 0) * m_pRigidBodySystem[i].orientation;
 
 	m_pRigidBodySystem[i].orientation += (step * 0.5f) * temp;
 	float norm = m_pRigidBodySystem[i].orientation.norm();
 	m_pRigidBodySystem[i].orientation = (1 / norm) * m_pRigidBodySystem[i].orientation;
 
-	m_pRigidBodySystem[i].angularMomentum += step * torque;
+	m_pRigidBodySystem[i].angularMomentum += step * (m_pRigidBodySystem[i].torque - (0.5f * m_pRigidBodySystem[i].angularMomentum));
 	Mat4 transposeRotation = m_pRigidBodySystem[i].orientation.getRotMat();
 	transposeRotation.transpose();
 	m_pRigidBodySystem[i].intertiaTensorInverse = m_pRigidBodySystem[i].orientation.getRotMat() * m_pRigidBodySystem[i].intertiaTensorInverse * transposeRotation;
 	m_pRigidBodySystem[i].angularVelocity = m_pRigidBodySystem[i].intertiaTensorInverse * m_pRigidBodySystem[i].angularMomentum;
-	torque = Vec3(0, 0, 0);
-	Vec3 pointVelocity = m_pRigidBodySystem[i].comVelocity + cross(m_pRigidBodySystem[i].angularVelocity, Vec3(-0.3f, -0.5f, -0.25f));
 
+	m_pRigidBodySystem[i].forces = Vec3(0, 0, 0);
+	m_pRigidBodySystem[i].torque = Vec3(0, 0, 0);
 
 	if (m_iTestCase == 0) {
 		cout << "Angular Velocity after one Euler step: " << m_pRigidBodySystem[i].angularVelocity << "\n";
+		Vec3 pointVelocity = m_pRigidBodySystem[i].comVelocity + cross(m_pRigidBodySystem[i].angularVelocity, Vec3(-0.3f, -0.5f, -0.25f));
 		cout << "Linear Velocity at point (-0.3, -0.5, -0.25) after one Euler step: " << pointVelocity << "\n";
+	}
+}
+
+void RigidBodySystemSimulator::handleCollision(int objA, int objB) {
+	Vec3 posA = m_pRigidBodySystem[objA].worldToObj(collInfo.collisionPointWorld);
+	Vec3 velA = m_pRigidBodySystem[objA].comVelocity + cross(m_pRigidBodySystem[objA].angularVelocity, posA);
+	Vec3 posB = m_pRigidBodySystem[objB].worldToObj(collInfo.collisionPointWorld);
+	Vec3 velB = m_pRigidBodySystem[objB].comVelocity + cross(m_pRigidBodySystem[objB].angularVelocity, posB);
+	Vec3 velRel = velA - velB;
+	float normalVel = dot(collInfo.normalWorld, velRel);
+	float c = 1;
+	if (normalVel < 0) {
+		float impulse;
+
+		impulse = -(1 + c) * dot(velRel, collInfo.normalWorld) /
+			((1 / m_pRigidBodySystem[objA].mass) +
+			(1 / m_pRigidBodySystem[objB].mass) +
+				dot(((cross(m_pRigidBodySystem[objA].intertiaTensorInverse * cross(posA, collInfo.normalWorld), posA)) +
+				(cross(m_pRigidBodySystem[objB].intertiaTensorInverse * cross(posB, collInfo.normalWorld), posB))), collInfo.normalWorld));
+		//ObjA
+		m_pRigidBodySystem[objA].comPosition += collInfo.depth * collInfo.normalWorld;
+		m_pRigidBodySystem[objA].comVelocity += impulse * collInfo.normalWorld / m_pRigidBodySystem[objA].mass;
+		m_pRigidBodySystem[objA].angularMomentum += (cross(posA, impulse * collInfo.normalWorld));
+
+		//ObjB
+		m_pRigidBodySystem[objB].comPosition -= collInfo.depth * collInfo.normalWorld;
+		m_pRigidBodySystem[objB].comVelocity -= impulse * collInfo.normalWorld / m_pRigidBodySystem[objB].mass;
+		m_pRigidBodySystem[objB].angularMomentum -= (cross(posB, impulse * collInfo.normalWorld));
+	}
+}
+
+void RigidBodySystemSimulator::handleWallCollision(int objA, int objB)
+{
+	Vec3 posA = Vec3(0, 0, 0);
+	Vec3 velA = m_pRigidBodySystem[objA].comVelocity + cross(m_pRigidBodySystem[objA].angularVelocity, posA);
+	float normalVel = dot(collInfo.normalWorld, velA);
+	float c = 1;
+	if (normalVel < 0) {
+		float impulse;
+		impulse = -(1 + c) * dot(velA, collInfo.normalWorld) /
+			((1 / m_pRigidBodySystem[objA].mass) +
+				dot(cross(m_pRigidBodySystem[objA].intertiaTensorInverse * cross(posA, collInfo.normalWorld), posA), collInfo.normalWorld));
+		//ObjA
+		m_pRigidBodySystem[objA].comVelocity += impulse * collInfo.normalWorld / m_pRigidBodySystem[objA].mass;
+		m_pRigidBodySystem[objA].angularMomentum += (cross(posA, impulse * collInfo.normalWorld));
 	}
 }
 
 void RigidBodySystemSimulator::externalForcesCalculations(float timeElapsed)
 {
-	if (m_iTestCase == 1) {
+	if (m_iTestCase == 1 || m_iTestCase == 3) {
 		Point2D mouseDiff;
 		mouseDiff.x = m_trackmouse.x - m_oldtrackmouse.x;
 		mouseDiff.y = m_trackmouse.y - m_oldtrackmouse.y;
-
-		Vec3 contact = -Vec3(m_oldtrackmouse.x, m_oldtrackmouse.y, 0);
 
 		if (mouseDiff.x != 0 || mouseDiff.y != 0)
 		{
@@ -270,15 +325,55 @@ void RigidBodySystemSimulator::externalForcesCalculations(float timeElapsed)
 			worldViewInv = worldViewInv.inverse();
 			Vec3 inputView = Vec3((float)mouseDiff.x, (float)-mouseDiff.y, 0);
 			Vec3 inputWorld = worldViewInv.transformVectorNormal(inputView);
-
-			contact = worldViewInv.transformVectorNormal(contact);
+			Vec3 contact = worldViewInv.transformVector(Vec3(m_trackmouse.x, m_trackmouse.y, 0));
 
 			// find a proper scale!
-			float inputScale = 0.001f;
-			contact = contact * inputScale;
+			float inputScale = 0.1f;
 			inputWorld = inputWorld * inputScale;
-			m_externalForce += inputWorld;
-			torque += cross(inputWorld, contact);
+			if (m_iTestCase == 1)
+				applyForceOnBody(1, 0.001f * contact, inputWorld * 0.001f);
+			if (m_iTestCase == 3) {
+				switch (objectColor) {
+				case RED:
+					applyForceOnBody(4, Vec3(0, 0, 0), inputWorld * 1);
+					break;
+				case YELLOW:
+					applyForceOnBody(5, Vec3(0, 0, 0), inputWorld * 1);
+					break;
+				case GREEN:
+					applyForceOnBody(6, Vec3(0, 0, 0), inputWorld * 1);
+					break;
+				case WHITE:
+					applyForceOnBody(7, Vec3(0, 0, 0), inputWorld * 1);
+					break;
+				default:
+					break;
+				}
+			}
 		}
 	}
+}
+
+void RigidBodySystemSimulator::resetPositions() {
+
+	//Reset Demo1
+	m_pRigidBodySystem[0].init(Vec3(0,0,0), m_pRigidBodySystem[0].size, m_pRigidBodySystem[0].mass);
+	setOrientationOf(0, Quat(0, 0, sqrt(2) / 2, sqrt(2) / 2));
+	applyForceOnBody(0, Vec3(0.3f, 0.5f, 0.25f), Vec3(1, 1, 0));
+
+	//Reset Demo2
+	m_pRigidBodySystem[1].init(Vec3(-0.2f, -0.1f, 0.1f), m_pRigidBodySystem[1].size, m_pRigidBodySystem[1].mass);
+
+	//Reset Demo3
+	m_pRigidBodySystem[2].init(Vec3(0.2f, 0.3f, 0), m_pRigidBodySystem[2].size, m_pRigidBodySystem[2].mass);
+	setOrientationOf(2, Quat(0, sin(M_PI / 8), 0, cos(M_PI / 8)) * Quat(0, 0, sin(M_PI / 8), cos(M_PI / 8)));
+	setVelocityOf(2, Vec3(-0.1f, -0.1f, 0));
+
+	m_pRigidBodySystem[3].init(Vec3(0.15f, 0.05f, 0), m_pRigidBodySystem[3].size, m_pRigidBodySystem[3].mass);
+
+	//Demo4
+	m_pRigidBodySystem[4].init(Vec3(-0.25f, -0.4f, 0), m_pRigidBodySystem[4].size, m_pRigidBodySystem[4].mass);
+	m_pRigidBodySystem[5].init(Vec3(0.25f, -0.4f, 0), m_pRigidBodySystem[5].size, m_pRigidBodySystem[5].mass);
+	m_pRigidBodySystem[6].init(Vec3(0.1f, -0.2f, 0), m_pRigidBodySystem[6].size, m_pRigidBodySystem[6].mass);
+	m_pRigidBodySystem[7].init(Vec3(-0.15f, -0.2f, 0), m_pRigidBodySystem[7].size, m_pRigidBodySystem[7].mass);
 }
