@@ -37,27 +37,23 @@ public:
 	void setOrientationOf(int i,Quat orientation);
 	void setVelocityOf(int i, Vec3 velocity);
 
-	void IntegrateRigidBody(int i, float step);
-
+	void integrateRigidBody(int i, float step);
 	void handleCollision(int objA, int objB);
 	void handleWallCollision(int objA, int objB);
-
 	void resetPositions();
+
 private:
 	// Attributes
 	// add your RigidBodySystem data members, for e.g.,
 	// RigidBodySystem * m_pRigidBodySystem; 
 	RigidBodySystem m_pRigidBodySystem[14];
+	CollisionInfo collInfo;
 	Vec3 m_externalForce;
 	int count;
 	int objectColor;
-	CollisionInfo collInfo;
 	float damping;
-	int iterator1;
-	int iterator2;
-	bool checkWalls;
-
-
+	int iterator;
+	
 	// UI Attributes
 	Point2D m_mouse;
 	Point2D m_trackmouse;
