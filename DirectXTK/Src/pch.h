@@ -88,6 +88,7 @@
 #include <algorithm>
 #include <array>
 #include <exception>
+#include <stdexcept>
 #include <functional>
 #include <list>
 #include <map>
