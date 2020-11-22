@@ -7,7 +7,7 @@ MassSpringSystemSimulator::MassSpringSystemSimulator() {
     m_iIntegrator = EULER;
 
     m_springColor = Vec3(50, 50, 50);
-    m_externalForce = Vec3();
+    m_externalForce = Vec3(0, -9.81, 0) * m_fMass;
     m_mouse = Point2D();
     m_trackmouse = Point2D();
     m_oldtrackmouse = Point2D();
@@ -121,6 +121,13 @@ void MassSpringSystemSimulator::simulateTimestep(float timeStep)
         if (mp.isFixed) continue;
         mp.position += mp.velocity * timeStep;
         mp.velocity += (mp.force / m_fMass) * timeStep;
+
+        // Gravity & collision with floor
+        float floor_level = -1.0;
+        if (mp.position.y < floor_level) {
+            mp.position.y = floor_level + (floor_level - mp.position.y);
+            mp.velocity.y *= -1;
+        }
     }
 }
 
