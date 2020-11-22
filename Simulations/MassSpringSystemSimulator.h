@@ -8,6 +8,24 @@
 #define MIDPOINT 2
 // Do Not Change
 
+struct MassPoint {
+	MassPoint(Vec3 position, Vec3 velocity, bool isFixed)
+		: position(position), velocity(velocity), isFixed(isFixed) {
+	}
+	Vec3 position;
+	Vec3 velocity;
+	Vec3 force;
+	bool isFixed;
+};
+
+struct Spring {
+	Spring(MassPoint& mp1, MassPoint& mp2, float initialLength) :
+		mp1(mp1), mp2(mp2), initialLength(initialLength) {
+	}
+	MassPoint& mp1, & mp2;
+	float initialLength;
+};
+
 
 class MassSpringSystemSimulator:public Simulator{
 public:
@@ -15,7 +33,6 @@ public:
 	MassSpringSystemSimulator();
 	
 	// UI Functions
-	const char * getTestCasesStr();
 	void initUI(DrawingUtilitiesClass * DUC);
 	void reset();
 	void drawFrame(ID3D11DeviceContext* pd3dImmediateContext);
@@ -26,15 +43,18 @@ public:
 	void onMouse(int x, int y);
 
 	// Specific Functions
+	const char* getTestCasesStr();
+	const char* getIntegratorStr();
+
 	void setMass(float mass);
 	void setStiffness(float stiffness);
 	void setDampingFactor(float damping);
-	int addMassPoint(Vec3 position, Vec3 Velocity, bool isFixed);
+	int addMassPoint(Vec3 position, Vec3 velocity, bool isFixed);
 	void addSpring(int masspoint1, int masspoint2, float initialLength);
-	int getNumberOfMassPoints();
-	int getNumberOfSprings();
-	Vec3 getPositionOfMassPoint(int index);
-	Vec3 getVelocityOfMassPoint(int index);
+	int getNumberOfMassPoints() const;
+	int getNumberOfSprings() const;
+	Vec3 getPositionOfMassPoint(int index) const;
+	Vec3 getVelocityOfMassPoint(int index) const;
 	void applyExternalForce(Vec3 force);
 	
 	// Do Not Change
@@ -49,7 +69,11 @@ private:
 	float m_fDamping;
 	int m_iIntegrator;
 
+	std::vector<MassPoint> massPoints;
+	std::vector<Spring> springs;
+
 	// UI Attributes
+	Vec3 m_springColor;
 	Vec3 m_externalForce;
 	Point2D m_mouse;
 	Point2D m_trackmouse;
