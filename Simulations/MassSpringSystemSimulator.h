@@ -16,6 +16,7 @@ public:
 	
 	// UI Functions
 	const char * getTestCasesStr();
+	const char* getIntegratorStr();
 	void initUI(DrawingUtilitiesClass * DUC);
 	void reset();
 	void drawFrame(ID3D11DeviceContext* pd3dImmediateContext);
