@@ -1,10 +1,11 @@
 #include "MassSpringSystemSimulator.h"
 
 MassSpringSystemSimulator::MassSpringSystemSimulator() {
+    m_iIntegrator = EULER;
     m_fMass = 10;
     m_fStiffness = 40;
     m_fDamping = 0;
-    m_iIntegrator = EULER;
+    m_fGravity = 0;
 
     m_springColor = Vec3(50, 50, 50);
     m_externalForce = Vec3(0, -9.81, 0) * m_fMass;
@@ -32,6 +33,7 @@ void MassSpringSystemSimulator::initUI(DrawingUtilitiesClass* DUC)
     TwAddVarRW(DUC->g_pTweakBar, "Mass Spheres", TW_TYPE_FLOAT, &m_fMass, "min=0.1 max=100.0 step=0.1");
     TwAddVarRW(DUC->g_pTweakBar, "Stiffness", TW_TYPE_FLOAT, &m_fStiffness, "min=0.0 max=100 step=0.5");
     TwAddVarRW(DUC->g_pTweakBar, "Damping", TW_TYPE_FLOAT, &m_fDamping, "min=0.00 max=5.00 step=0.05");
+    TwAddVarRW(DUC->g_pTweakBar, "Gravity", TW_TYPE_FLOAT, &m_fGravity, "min=0.00 max=100.00 step=0.01");
 }
 
 void MassSpringSystemSimulator::reset()
@@ -83,7 +85,7 @@ void MassSpringSystemSimulator::simulateTimestep(float timeStep)
 {
     for (MassPoint& mp : this->massPoints) {
         mp.force = Vec3(0, 0, 0);
-        mp.force += m_externalForce;
+        mp.force += Vec3(0, -m_fGravity, 0) * m_fMass;
         mp.force += mp.velocity * -m_fDamping;
         mp.initialForce = mp.force;
     }
@@ -112,6 +114,11 @@ void MassSpringSystemSimulator::simulateTimestep(float timeStep)
             break;
 
         case LEAPFROG:
+            // v(t + h / 2) = v(t - h / 2) + h * a(t)
+            // midV = prevmidV + (mp.force / m_fMass) * timeStep;
+            
+            // x(t + h) = x(t) + h * v(t + h / 2)
+            // mp.position += midV * timeStep;
             break;
         }
         // Apply to endpoints
@@ -124,7 +131,7 @@ void MassSpringSystemSimulator::simulateTimestep(float timeStep)
         Vec3 midVelocity;
         switch (m_iIntegrator) {
         case EULER:
-        mp.position += mp.velocity * timeStep;
+            mp.position += mp.velocity * timeStep;
             break;
         case MIDPOINT:
             midVelocity = mp.velocity + (mp.initialForce / m_fMass) * (timeStep / 2);
@@ -136,7 +143,7 @@ void MassSpringSystemSimulator::simulateTimestep(float timeStep)
         
         mp.velocity += (mp.force / m_fMass) * timeStep;
 
-        // Gravity & collision with floor
+        // Floor collision
         float floor_level = -1.0;
         if (mp.position.y < floor_level) {
             mp.position.y = floor_level + (floor_level - mp.position.y);
