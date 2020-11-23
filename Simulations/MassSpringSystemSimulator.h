@@ -14,7 +14,7 @@ struct MassPoint {
     }
     Vec3 position;
     Vec3 velocity;
-    Vec3 force;
+    Vec3 force, initialForce;
     bool isFixed;
 };
 

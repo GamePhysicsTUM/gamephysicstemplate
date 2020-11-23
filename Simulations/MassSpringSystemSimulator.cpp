@@ -51,7 +51,6 @@ void MassSpringSystemSimulator::drawFrame(ID3D11DeviceContext* pd3dImmediateCont
         this->DUC->drawSphere(mp.position, scale);
     }
 
-    
     this->DUC->beginLine();
     for (Spring& s : this->springs) {
         this->DUC->drawLine(s.mp1.position, m_springColor, s.mp2.position, m_springColor);
@@ -86,17 +85,20 @@ void MassSpringSystemSimulator::simulateTimestep(float timeStep)
         mp.force = Vec3(0, 0, 0);
         mp.force += m_externalForce;
         mp.force += mp.velocity * -m_fDamping;
+        mp.initialForce = mp.force;
     }
     // Internal forces
     for (Spring& s : this->springs) {
-        Vec3 elasticForce, differenceVector;
         Vec3 mid_X_mp1, mid_X_mp2;
-        float distance = 0;
+
+        Vec3 differenceVector = (s.mp1.position - s.mp2.position);
+        float distance = sqrt(s.mp1.position.squaredDistanceTo(s.mp2.position));
+        Vec3 elasticForce = (differenceVector / distance) * ((distance - (double)s.initialLength) * -m_fStiffness);
+        s.mp1.initialForce += elasticForce;
+        s.mp2.initialForce += -elasticForce;
 
         switch (m_iIntegrator) {
         case EULER:
-            differenceVector = (s.mp1.position - s.mp2.position);
-            distance = sqrt(s.mp1.position.squaredDistanceTo(s.mp2.position));
             break;
 
         case MIDPOINT:
@@ -105,13 +107,13 @@ void MassSpringSystemSimulator::simulateTimestep(float timeStep)
 
             differenceVector = (mid_X_mp1 - mid_X_mp2);
             distance = sqrt(mid_X_mp1.squaredDistanceTo(mid_X_mp2));
+
+            elasticForce = (differenceVector / distance) * ((distance - (double)s.initialLength) * -m_fStiffness);
             break;
 
         case LEAPFROG:
             break;
         }
-
-        elasticForce = (differenceVector / distance) * ((distance - (double)s.initialLength) * -m_fStiffness);
         // Apply to endpoints
         s.mp1.force += elasticForce;
         s.mp2.force += -elasticForce;
@@ -119,7 +121,19 @@ void MassSpringSystemSimulator::simulateTimestep(float timeStep)
     // Integrate forces into motion
     for (MassPoint& mp : this->massPoints) {
         if (mp.isFixed) continue;
+        Vec3 midVelocity;
+        switch (m_iIntegrator) {
+        case EULER:
         mp.position += mp.velocity * timeStep;
+            break;
+        case MIDPOINT:
+            midVelocity = mp.velocity + (mp.initialForce / m_fMass) * (timeStep / 2);
+            mp.position += midVelocity * timeStep;
+            break;
+        case LEAPFROG:
+            break;
+        }
+        
         mp.velocity += (mp.force / m_fMass) * timeStep;
 
         // Gravity & collision with floor
