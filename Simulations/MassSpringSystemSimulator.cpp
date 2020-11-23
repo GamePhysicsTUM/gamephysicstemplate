@@ -132,7 +132,7 @@ void MassSpringSystemSimulator::externalForcesCalculations(float timeElapsed)
 {
 }
 
-void MassSpringSystemSimulator::simulateTimestep(float timeStep)
+void MassSpringSystemSimulator::computeForces()
 {
     for (MassPoint& mp : this->massPoints) {
         mp.force = Vec3(0, 0, 0);
@@ -140,61 +140,60 @@ void MassSpringSystemSimulator::simulateTimestep(float timeStep)
         mp.force += Vec3(0, -m_fGravity, 0) * m_fMass;
         // Damping
         mp.force += mp.velocity * -m_fDamping;
-        mp.initialForce = mp.force;
     }
-    // Internal forces
+
     for (Spring& s : this->springs) {
         Vec3 mid_X_mp1, mid_X_mp2;
 
         Vec3 differenceVector = (s.mp1.position - s.mp2.position);
         float distance = sqrt(s.mp1.position.squaredDistanceTo(s.mp2.position));
         Vec3 elasticForce = (differenceVector / distance) * ((distance - (double)s.initialLength) * -m_fStiffness);
-        s.mp1.initialForce += elasticForce;
-        s.mp2.initialForce += -elasticForce;
-
-        switch (m_iIntegrator) {
-        case EULER:
-            break;
-
-        case MIDPOINT:
-            mid_X_mp1 = s.mp1.position + s.mp1.velocity * (timeStep / 2);
-            mid_X_mp2 = s.mp2.position + s.mp2.velocity * (timeStep / 2);
-
-            differenceVector = (mid_X_mp1 - mid_X_mp2);
-            distance = sqrt(mid_X_mp1.squaredDistanceTo(mid_X_mp2));
-
-            elasticForce = (differenceVector / distance) * ((distance - (double)s.initialLength) * -m_fStiffness);
-            break;
-
-        case LEAPFROG:
-            // v(t + h / 2) = v(t - h / 2) + h * a(t)
-            // midV = prevmidV + (mp.force / m_fMass) * timeStep;
-            
-            // x(t + h) = x(t) + h * v(t + h / 2)
-            // mp.position += midV * timeStep;
-            break;
-        }
+        
         // Apply to endpoints
         s.mp1.force += elasticForce;
         s.mp2.force += -elasticForce;
     }
-    // Integrate forces into motion
+}
+
+void MassSpringSystemSimulator::simulateTimestep(float timeStep)
+{
+    this->computeForces();
+        // Integrate forces into motion
     for (MassPoint& mp : this->massPoints) {
         if (mp.isFixed) continue;
-        Vec3 midVelocity;
         switch (m_iIntegrator) {
         case EULER:
             mp.position += mp.velocity * timeStep;
+            mp.velocity += (mp.force / m_fMass) * timeStep;
             break;
         case MIDPOINT:
-            midVelocity = mp.velocity + (mp.initialForce / m_fMass) * (timeStep / 2);
-            mp.position += midVelocity * timeStep;
+            mp.oldPosition = mp.position;
+            mp.oldVelocity = mp.velocity;
+            mp.position += mp.velocity * 0.5 *timeStep;
+            mp.velocity += (mp.force / m_fMass) * 0.5 * timeStep;
             break;
-        case LEAPFROG:
+        case LEAPFROG: // kick-drift-kick version of Leapfrog (synchronised and allows variable time-step)
+            mp.velocity += (mp.force / m_fMass) * 0.5 * timeStep;
+            mp.position += mp.velocity * timeStep;
             break;
         }
-        
-        mp.velocity += (mp.force / m_fMass) * timeStep;
+    }
+
+    //compute force at new point and apply if needed (also, floor collision once we have final state)
+    this->computeForces();
+    for (MassPoint& mp : this->massPoints) {
+        if (mp.isFixed) continue;
+        switch (m_iIntegrator) {
+        case EULER:
+            break;
+        case MIDPOINT:
+            mp.position = mp.oldPosition + mp.velocity * timeStep;
+            mp.velocity = mp.oldVelocity + (mp.force / m_fMass) *timeStep;
+            break;
+        case LEAPFROG: // kick-drift-kick version of Leapfrog (synchronised and allows variable time-step)
+            mp.velocity += (mp.force / m_fMass) * 0.5 * timeStep;
+            break;
+        }
 
         // Floor collision
         float floor_level = -1.0;

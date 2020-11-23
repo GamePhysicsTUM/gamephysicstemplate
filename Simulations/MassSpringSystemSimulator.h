@@ -12,9 +12,9 @@ struct MassPoint {
     MassPoint(Vec3 position, Vec3 velocity, bool isFixed)
         : position(position), velocity(velocity), isFixed(isFixed) {
     }
-    Vec3 position;
-    Vec3 velocity;
-    Vec3 force, initialForce;
+    Vec3 position, oldPosition;  // old position and velocity needed for midpoint
+    Vec3 velocity, oldVelocity;
+    Vec3 force;
     bool isFixed;
 };
 
@@ -38,6 +38,7 @@ public:
     void drawFrame(ID3D11DeviceContext* pd3dImmediateContext);
     void notifyCaseChanged(int testCase);
     void externalForcesCalculations(float timeElapsed);
+    void computeForces();
     void simulateTimestep(float timeStep);
     void onClick(int x, int y);
     void onMouse(int x, int y);
