@@ -20,8 +20,8 @@ using namespace GamePhysics;
 
 //#define ADAPTIVESTEP
 
-#define TEMPLATE_DEMO
-//#define MASS_SPRING_SYSTEM
+//#define TEMPLATE_DEMO
+#define MASS_SPRING_SYSTEM
 //#define RIGID_BODY_SYSTEM
 //#define SPH_SYSTEM
 
@@ -40,7 +40,7 @@ using namespace GamePhysics;
 
 DrawingUtilitiesClass * g_pDUC;
 Simulator * g_pSimulator;
-float 	g_fTimestep = 0.001;
+float 	g_fTimestep = 0.005;
 #ifdef ADAPTIVESTEP
 float   g_fTimeFactor = 1;
 #endif
