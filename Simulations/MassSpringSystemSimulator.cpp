@@ -7,6 +7,8 @@ MassSpringSystemSimulator::MassSpringSystemSimulator() {
     m_fDamping = 0;
     m_fGravity = 0;
     m_fComplexInitialRatio = 0.50;
+    m_vfMovableObjectFinalPos = Vec3();
+
 
     m_springColor = Vec3(50, 50, 50);
     m_mouse = Point2D();
@@ -130,6 +132,24 @@ void MassSpringSystemSimulator::notifyCaseChanged(int testCase)
 
 void MassSpringSystemSimulator::externalForcesCalculations(float timeElapsed)
 {
+    // Apply the mouse deltas to g_vfMovableObjectPos (move along cameras view plane)
+    Point2D mouseDiff;
+    mouseDiff.x = m_trackmouse.x - m_oldtrackmouse.x;
+    mouseDiff.y = m_trackmouse.y - m_oldtrackmouse.y;
+    if (mouseDiff.x != 0 || mouseDiff.y != 0)
+    {
+        Mat4 worldViewInv = Mat4(DUC->g_camera.GetWorldMatrix() * DUC->g_camera.GetViewMatrix());
+        worldViewInv = worldViewInv.inverse();
+        Vec3 inputView = Vec3((float)mouseDiff.x, (float)-mouseDiff.y, 0);
+        Vec3 inputWorld = worldViewInv.transformVectorNormal(inputView);
+        // find a proper scale!
+        float inputScale = 0.005f;
+        inputWorld = inputWorld * inputScale;
+        massPoints[0].position = m_vfMovableObjectFinalPos + inputWorld;
+    }
+    else {
+        m_vfMovableObjectFinalPos = massPoints[0].position;
+    }
 }
 
 void MassSpringSystemSimulator::computeForces()
