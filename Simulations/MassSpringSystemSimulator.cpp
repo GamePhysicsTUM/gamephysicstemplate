@@ -6,9 +6,9 @@ MassSpringSystemSimulator::MassSpringSystemSimulator() {
     m_fStiffness = 40;
     m_fDamping = 0;
     m_fGravity = 0;
+    m_fComplexInitialRatio = 0.50;
 
     m_springColor = Vec3(50, 50, 50);
-    m_externalForce = Vec3(0, -9.81, 0) * m_fMass;
     m_mouse = Point2D();
     m_trackmouse = Point2D();
     m_oldtrackmouse = Point2D();
@@ -31,9 +31,10 @@ void MassSpringSystemSimulator::initUI(DrawingUtilitiesClass* DUC)
     TwType TW_TYPE_INTEGRATOR = TwDefineEnumFromString("Integrator", getIntegratorStr());
     TwAddVarRW(DUC->g_pTweakBar, "Integrator", TW_TYPE_INTEGRATOR, &m_iIntegrator, "");
     TwAddVarRW(DUC->g_pTweakBar, "Mass Spheres", TW_TYPE_FLOAT, &m_fMass, "min=0.1 max=100.0 step=0.1");
-    TwAddVarRW(DUC->g_pTweakBar, "Stiffness", TW_TYPE_FLOAT, &m_fStiffness, "min=0.0 max=100 step=0.5");
+    TwAddVarRW(DUC->g_pTweakBar, "Stiffness", TW_TYPE_FLOAT, &m_fStiffness, "min=0.0 max=500 step=0.5");
     TwAddVarRW(DUC->g_pTweakBar, "Damping", TW_TYPE_FLOAT, &m_fDamping, "min=0.00 max=5.00 step=0.05");
     TwAddVarRW(DUC->g_pTweakBar, "Gravity", TW_TYPE_FLOAT, &m_fGravity, "min=0.00 max=100.00 step=0.01");
+    TwAddVarRW(DUC->g_pTweakBar, "Complex: Edge/Initial", TW_TYPE_FLOAT, &m_fComplexInitialRatio, "min=0.01 max=100.00 step=0.01");
 }
 
 void MassSpringSystemSimulator::reset()
@@ -72,7 +73,61 @@ void MassSpringSystemSimulator::notifyCaseChanged(int testCase)
         );
         break;
     case 1:
-        // 10 mass points, 10 springs
+        Vec3 positionOffset = Vec3(0, 2, 0);
+        float vertexMap[3] = { 0, 1, (1 + sqrt(5)) / 2 };
+        vector<Vec3> positions;
+        for (int i = 0; i < 3; i++) {
+            Vec3 position;
+            for (int j = 2; j >= 0; j--) {
+                position[(i + j) % 3] = vertexMap[j];
+            }
+            positions.push_back(position);
+            positions.push_back(-position);
+            position[(i % 3 + 1) % 3] *= -1;
+            positions.push_back(position);
+            position[(i % 3 + 1) % 3] *= -1;
+            position[(i % 3 + 2) % 3] *= -1;
+            positions.push_back(position);
+        }
+        for(Vec3& position : positions) {
+            addMassPoint(position + positionOffset, { 0, 0, 0 }, false);
+        }
+
+        float springLength = sqrt(positions[0].squaredDistanceTo(positions[8])) * m_fComplexInitialRatio;
+        addSpring(10, 0, springLength);
+        addSpring(10, 3, springLength);
+        addSpring(10, 5, springLength);
+        addSpring(10, 7, springLength);
+        addSpring(10, 8, springLength);
+
+        addSpring(11, 1, springLength);
+        addSpring(11, 2, springLength);
+        addSpring(11, 4, springLength);
+        addSpring(11, 6, springLength);
+        addSpring(11, 9, springLength);
+
+        addSpring(0, 7, springLength);
+        addSpring(7, 5, springLength);
+        addSpring(5, 3, springLength);
+        addSpring(3, 8, springLength);
+        addSpring(8, 0, springLength);
+
+        addSpring(1, 6, springLength);
+        addSpring(6, 4, springLength);
+        addSpring(4, 2, springLength);
+        addSpring(2, 9, springLength);
+        addSpring(9, 1, springLength);
+
+        addSpring(3, 1, springLength);
+        addSpring(3, 6, springLength);
+        addSpring(8, 6, springLength);
+        addSpring(8, 4, springLength);
+        addSpring(0, 4, springLength);
+        addSpring(0, 2, springLength);
+        addSpring(7, 2, springLength);
+        addSpring(7, 9, springLength);
+        addSpring(5, 9, springLength);
+        addSpring(5, 1, springLength);
         break;
     }
 }
@@ -85,7 +140,9 @@ void MassSpringSystemSimulator::simulateTimestep(float timeStep)
 {
     for (MassPoint& mp : this->massPoints) {
         mp.force = Vec3(0, 0, 0);
+        // Gravity
         mp.force += Vec3(0, -m_fGravity, 0) * m_fMass;
+        // Damping
         mp.force += mp.velocity * -m_fDamping;
         mp.initialForce = mp.force;
     }

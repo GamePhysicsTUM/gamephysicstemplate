@@ -69,6 +69,7 @@ private:
     float m_fDamping;
     int m_iIntegrator;
     float m_fGravity;
+    float m_fComplexInitialRatio;
 
     std::vector<MassPoint> massPoints;
     std::vector<Spring> springs;
