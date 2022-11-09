@@ -83,7 +83,7 @@ public:
 	inline const Quaternion operator*=(const Quaternion &q) 
 	{
 		vector3Dim<Scalar> v1(x,y,z), v2(q.x,q.y,q.z);
-		vector3Dim<Scalar> nv = v1*q.w + v2*w + cross(v2,v1);
+		vector3Dim<Scalar> nv = v1*q.w + v2*w + cross(v1,v2);
 		Scalar nw = w*q.w - (v1.x*v2.x+v1.y*v2.y+v1.z*v2.z);
 		x = nv.x;
 		y = nv.y;
@@ -106,7 +106,7 @@ public:
 	inline const Quaternion operator*(const Quaternion &q) const
 	{
 		vector3Dim<Scalar> v1(x,y,z), v2(q.x,q.y,q.z);
-		vector3Dim<Scalar> nv = v1*q.w + v2*w + cross(v2,v1);
+		vector3Dim<Scalar> nv = v1*q.w + v2*w + cross(v1,v2);
 		Scalar nw = w*q.w - (v1.x*v2.x+v1.y*v2.y+v1.z*v2.z);
 
 		return Quaternion(nv.x,nv.y,nv.z,nw);
