@@ -65,9 +65,9 @@ namespace SimulatorTester
 			Assert::AreEqual(0.0f,(float)vel.y,0.0001f,L"Y componnent of body 0 is not right",LINE_INFO());
 			Assert::AreEqual(0.2f,(float)vel.z,0.0001f,L"Z componnent of body 0 is not right",LINE_INFO());
 			Vec3 angvel = rbss->getAngularVelocityOfRigidBody(0);
-			Assert::AreEqual(5.9064f,(float)angvel.x,0.0001f,L"X componnent of body 0 is not right",LINE_INFO());
-			Assert::AreEqual(-1.7891f,(float)angvel.y,0.0001f,L"Y componnent of body 0 is not right",LINE_INFO());
-			Assert::AreEqual(-1.0204f,(float)angvel.z,0.0001f,L"Z componnent of body 0 is not right",LINE_INFO());
+			Assert::AreEqual(5.8590f,(float)angvel.x,0.0001f,L"X componnent of body 0 is not right",LINE_INFO());
+			Assert::AreEqual(-2.1106f,(float)angvel.y,0.0001f,L"Y componnent of body 0 is not right",LINE_INFO());
+			Assert::AreEqual(-1.1391f,(float)angvel.z,0.0001f,L"Z componnent of body 0 is not right",LINE_INFO());
 			delete rbss;
 		}
 
